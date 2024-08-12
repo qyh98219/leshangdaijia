@@ -25,7 +25,7 @@ tencent:
   map:
     key: PYOBZ-Y6ZRZ-HMZXP-ZTMES-***-***
 minio:
-  endpointUrl: http://139.198.127.41:9000
+  endpointUrl: http://192.168.163.131:9000
   accessKey: admin
   secreKey: admin123456
   bucketName: sph
