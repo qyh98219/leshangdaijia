@@ -27,8 +27,9 @@
     <properties>
         <java.version>17</java.version>
         <cloud.version>2023.0.0</cloud.version>
-        <alibaba.version>2022.0.0.0-RC2</alibaba.version>
-        <mybatis-plus.version>3.5.3.1</mybatis-plus.version>
+<!--        <alibaba.version>2022.0.0.0-RC2</alibaba.version>-->
+        <alibaba.version>2023.0.1.2</alibaba.version>
+        <mybatis-plus.version>3.5.7</mybatis-plus.version>
         <mysql.version>8.0.30</mysql.version>
         <knife4j.version>4.1.0</knife4j.version>
         <fastjson.version>2.0.41</fastjson.version>
@@ -71,7 +72,7 @@
             <!--mybatis-plus 持久层-->
             <dependency>
                 <groupId>com.baomidou</groupId>
-                <artifactId>mybatis-plus-boot-starter</artifactId>
+                <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
                 <version>${mybatis-plus.version}</version>
             </dependency>
             <!--mysql-->
