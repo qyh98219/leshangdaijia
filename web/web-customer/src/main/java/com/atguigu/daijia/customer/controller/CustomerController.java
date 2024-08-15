@@ -2,8 +2,10 @@ package com.atguigu.daijia.customer.controller;
 
 import com.atguigu.daijia.common.constant.RedisConstant;
 import com.atguigu.daijia.common.execption.GuiguException;
+import com.atguigu.daijia.common.login.GuiguLogin;
 import com.atguigu.daijia.common.result.Result;
 import com.atguigu.daijia.common.result.ResultCodeEnum;
+import com.atguigu.daijia.common.util.AuthContextHolder;
 import com.atguigu.daijia.customer.client.CustomerInfoFeignClient;
 import com.atguigu.daijia.customer.service.CustomerService;
 import com.atguigu.daijia.model.vo.customer.CustomerLoginVo;
@@ -35,12 +37,10 @@ public class CustomerController {
 
 
     @Operation(summary = "获取客户登录信息")
+    @GuiguLogin
     @GetMapping("/getCustomerLoginInfo")
     public Result<CustomerLoginVo> getCustomerLoginInfo(@RequestHeader(value="token") String token) {
-        String customerId = (String)redisTemplate.opsForValue().get(RedisConstant.USER_LOGIN_KEY_PREFIX+token);
-        if (!StringUtils.hasText(customerId)){
-            throw new GuiguException(ResultCodeEnum.DATA_ERROR);
-        }
+        String customerId = String.valueOf(AuthContextHolder.getUserId());
         return Result.ok(customerInfoService.getCustomerLoginInfo(Long.parseLong(customerId)));
     }
 }
