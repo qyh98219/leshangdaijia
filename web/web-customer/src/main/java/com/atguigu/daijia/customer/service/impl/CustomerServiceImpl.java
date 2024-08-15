@@ -6,6 +6,7 @@ import com.atguigu.daijia.common.result.Result;
 import com.atguigu.daijia.common.result.ResultCodeEnum;
 import com.atguigu.daijia.customer.client.CustomerInfoFeignClient;
 import com.atguigu.daijia.customer.service.CustomerService;
+import com.atguigu.daijia.model.vo.customer.CustomerLoginVo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,5 +43,20 @@ public class CustomerServiceImpl implements CustomerService {
         String token = UUID.randomUUID().toString().replaceAll("-", "");
         redisTemplate.opsForValue().set(RedisConstant.USER_LOGIN_KEY_PREFIX+token, customerId.toString(), RedisConstant.USER_LOGIN_KEY_TIMEOUT, TimeUnit.SECONDS);
         return token;
+    }
+
+    @Override
+    public CustomerLoginVo getCustomerLoginInfo(Long customerId) {
+        Result<CustomerLoginVo> result = customerInfoFeignClient.getCustomerLoginInfo(customerId);
+        if(!result.getCode().equals(HttpStatus.SC_OK)){
+            throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+        }
+
+        CustomerLoginVo customerLoginVo = result.getData();
+        if(Objects.isNull(customerLoginVo)){
+            throw new GuiguException(ResultCodeEnum.DATA_ERROR);
+        }
+
+        return customerLoginVo;
     }
 }
