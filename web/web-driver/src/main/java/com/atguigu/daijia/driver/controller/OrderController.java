@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @Tag(name = "订单API接口管理")
-@RestController
+@RestController("driverOrderController")
 @RequestMapping("/order")
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class OrderController {
