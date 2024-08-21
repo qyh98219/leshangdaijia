@@ -3,6 +3,8 @@ package com.atguigu.daijia.driver.service.impl;
 import cn.binarywang.wx.miniapp.api.WxMaService;
 import cn.binarywang.wx.miniapp.bean.WxMaJscode2SessionResult;
 import com.atguigu.daijia.common.constant.SystemConstant;
+import com.atguigu.daijia.common.execption.GuiguException;
+import com.atguigu.daijia.common.result.ResultCodeEnum;
 import com.atguigu.daijia.driver.mapper.DriverAccountMapper;
 import com.atguigu.daijia.driver.mapper.DriverInfoMapper;
 import com.atguigu.daijia.driver.mapper.DriverLoginLogMapper;
@@ -12,12 +14,15 @@ import com.atguigu.daijia.model.entity.driver.DriverAccount;
 import com.atguigu.daijia.model.entity.driver.DriverInfo;
 import com.atguigu.daijia.model.entity.driver.DriverLoginLog;
 import com.atguigu.daijia.model.entity.driver.DriverSet;
+import com.atguigu.daijia.model.vo.driver.DriverLoginVo;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.error.WxErrorException;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.Objects;
@@ -79,5 +84,18 @@ public class DriverInfoServiceImpl extends ServiceImpl<DriverInfoMapper, DriverI
         driverLoginLog.setMsg("小程序登录");
         driverLoginLogMapper.insert(driverLoginLog);
         return driverInfo.getId();
+    }
+
+    @Override
+    public DriverLoginVo getDriverLoginInfo(Long driverId) {
+        DriverInfo driverInfo = this.getById(driverId);
+
+        DriverLoginVo driverLoginVo = new DriverLoginVo();
+        BeanUtils.copyProperties(driverInfo, driverLoginVo);
+
+        //是否建档人脸识别
+        String faceModelId = driverInfo.getFaceModelId();
+        driverLoginVo.setIsArchiveFace(StringUtils.hasText(faceModelId));
+        return driverLoginVo;
     }
 }
