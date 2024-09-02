@@ -6,6 +6,7 @@ import com.atguigu.daijia.common.result.Result;
 import com.atguigu.daijia.common.result.ResultCodeEnum;
 import com.atguigu.daijia.driver.client.DriverInfoFeignClient;
 import com.atguigu.daijia.driver.service.DriverService;
+import com.atguigu.daijia.model.vo.driver.DriverAuthInfoVo;
 import com.atguigu.daijia.model.vo.driver.DriverLoginVo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
@@ -60,5 +61,10 @@ public class DriverServiceImpl implements DriverService {
             throw new GuiguException(ResultCodeEnum.DATA_ERROR);
         }
         return driverLoginVo;
+    }
+
+    @Override
+    public DriverAuthInfoVo getDriverAuthInfo(Long driverId) {
+        return driverInfoFeignClient.getDriverAuthInfo(driverId).getData();
     }
 }
