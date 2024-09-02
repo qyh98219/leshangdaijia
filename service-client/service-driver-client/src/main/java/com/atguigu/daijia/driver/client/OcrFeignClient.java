@@ -26,11 +26,4 @@ public interface OcrFeignClient {
      */
     @PostMapping(value = "/ocr/driverLicenseOcr", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     Result<DriverLicenseOcrVo> driverLicenseOcr(@RequestPart("file") MultipartFile file);
-    /**
-     * 身份证识别
-     * @param file
-     * @return
-     */
-    @PostMapping(value = "/ocr/idCardOcr", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    Result<IdCardOcrVo> idCardOcr(@RequestPart("file") MultipartFile file);
 }

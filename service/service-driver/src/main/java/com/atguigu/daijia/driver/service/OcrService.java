@@ -12,5 +12,5 @@ public interface OcrService {
 
     IdCardOcrVo idCardOcr(MultipartFile file);
 
-    DriverLicenseOcrVo driverLicenseOcr(MultipartFile file) throws IOException, TencentCloudSDKException;
+    DriverLicenseOcrVo driverLicenseOcr(MultipartFile file);
 }
