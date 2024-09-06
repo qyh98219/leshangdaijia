@@ -66,10 +66,10 @@ public class DriverInfoServiceImpl extends ServiceImpl<DriverInfoMapper, DriverI
             throw new RuntimeException(e);
         }
         LambdaQueryWrapper<DriverInfo> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(DriverInfo::getWxOpenId,openId);
+        queryWrapper.eq(DriverInfo::getWxOpenId, openId);
         DriverInfo driverInfo = this.getOne(queryWrapper);
 
-        if(Objects.isNull(driverInfo)){
+        if (Objects.isNull(driverInfo)) {
             //添加司机基本信息
             driverInfo = new DriverInfo();
             driverInfo.setNickname(String.valueOf(System.currentTimeMillis()));
