@@ -49,6 +49,6 @@ public class FeeRuleServiceImpl implements FeeRuleService {
         FeeRuleResponseVo feeRuleResponseVo = new FeeRuleResponseVo();
         BeanUtils.copyProperties(feeRuleResponse, feeRuleResponseVo);
 
-        return null;
+        return feeRuleResponseVo;
     }
 }
