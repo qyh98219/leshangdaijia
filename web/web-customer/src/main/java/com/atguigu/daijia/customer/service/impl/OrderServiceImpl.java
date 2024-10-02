@@ -4,6 +4,7 @@ import com.atguigu.daijia.common.result.Result;
 import com.atguigu.daijia.customer.service.OrderService;
 import com.atguigu.daijia.map.client.MapFeignClient;
 import com.atguigu.daijia.model.form.customer.ExpectOrderForm;
+import com.atguigu.daijia.model.form.customer.SubmitOrderForm;
 import com.atguigu.daijia.model.form.map.CalculateDrivingLineForm;
 import com.atguigu.daijia.model.form.rules.FeeRuleRequestForm;
 import com.atguigu.daijia.model.vo.customer.ExpectOrderVo;
@@ -48,5 +49,10 @@ public class OrderServiceImpl implements OrderService {
         expectOrderVo.setDrivingLineVo(drivingLineVo);
         expectOrderVo.setFeeRuleResponseVo(feeRuleResponseVo);
         return expectOrderVo;
+    }
+
+    @Override
+    public Long submitOrder(SubmitOrderForm submitOrderForm) {
+        return null;
     }
 }
