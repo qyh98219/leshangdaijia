@@ -1,16 +1,25 @@
 package com.atguigu.daijia.dispatch.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import com.atguigu.daijia.common.constant.RedisConstant;
 import com.atguigu.daijia.dispatch.mapper.OrderJobMapper;
 import com.atguigu.daijia.dispatch.service.NewOrderService;
 import com.atguigu.daijia.dispatch.xxl.client.XxlJobClient;
+import com.atguigu.daijia.map.client.LocationFeignClient;
 import com.atguigu.daijia.model.entity.dispatch.OrderJob;
+import com.atguigu.daijia.model.enums.OrderStatus;
+import com.atguigu.daijia.model.form.map.SearchNearByDriverForm;
+import com.atguigu.daijia.model.form.order.OrderInfoForm;
 import com.atguigu.daijia.model.vo.dispatch.NewOrderTaskVo;
+import com.atguigu.daijia.model.vo.map.NearByDriverVo;
+import com.atguigu.daijia.order.client.OrderInfoFeignClient;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
 
 @Slf4j
@@ -21,6 +30,12 @@ public class NewOrderServiceImpl implements NewOrderService {
     private XxlJobClient xxlJobClient;
     @Autowired
     private OrderJobMapper orderJobMapper;
+    @Autowired
+    private LocationFeignClient locationFeignClient;
+    @Autowired
+    private OrderInfoFeignClient orderInfoFeignClient;
+    @Autowired
+    private RedisTemplate redisTemplate;
 
 
     @Override
@@ -42,5 +57,38 @@ public class NewOrderServiceImpl implements NewOrderService {
             return jobId;
         }
         return null;
+    }
+
+    @Override
+    public void executeTask(long jobId) {
+        LambdaQueryWrapper<OrderJob> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(OrderJob::getJobId, jobId);
+        OrderJob orderJob = orderJobMapper.selectOne(queryWrapper);
+        if (Objects.isNull(orderJob)){
+            //任务没有创建
+            return;
+        }
+        //查询订单状态
+        NewOrderTaskVo newOrderTaskVo = JSONObject.parseObject(orderJob.getParameter(), NewOrderTaskVo.class);
+        Integer status = orderInfoFeignClient.getOrderStatus(newOrderTaskVo.getOrderId()).getData();
+        if(!Objects.equals(status, OrderStatus.WAITING_ACCEPT.getStatus())){
+            //停止任务调度
+            xxlJobClient.stopJob(jobId);
+            return;
+        }
+        SearchNearByDriverForm searchNearByDriverForm = new SearchNearByDriverForm();
+        searchNearByDriverForm.setLongitude(newOrderTaskVo.getStartPointLongitude());
+        searchNearByDriverForm.setLatitude(newOrderTaskVo.getStartPointLatitude());
+        searchNearByDriverForm.setMileageDistance(newOrderTaskVo.getExpectDistance());
+        List<NearByDriverVo> driverList = locationFeignClient.searchNearByDriver(searchNearByDriverForm).getData();
+        //遍历司机集合，为每个司机建立队列
+        driverList.forEach(item -> {
+            //记录司机id，防止重复推送订单信息
+            String repeatKey = RedisConstant.DRIVER_ORDER_REPEAT_LIST+newOrderTaskVo.getOrderId();
+            Boolean isMember = redisTemplate.opsForSet().isMember(repeatKey, item.getDriverId());
+            if(Boolean.FALSE.equals(isMember)){
+                //将订单推送给多个满足条件的司机
+            }
+        });
     }
 }
