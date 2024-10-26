@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -110,5 +111,27 @@ public class NewOrderServiceImpl implements NewOrderService {
                 redisTemplate.expire(key, RedisConstant.DRIVER_ORDER_TEMP_LIST_EXPIRES_TIME, TimeUnit.MINUTES);
             }
         });
+    }
+
+    @Override
+    public List<NewOrderDataVo> findNewOrderQueueData(Long driverId) {
+        List<NewOrderDataVo> newOrderDataVos = new ArrayList<>();
+        String key = RedisConstant.DRIVER_ORDER_TEMP_LIST+driverId;
+        Long size = redisTemplate.opsForList().size(key);
+        if(size > 0){
+            for (int i = 0; i < size; i++) {
+                String content = (String) redisTemplate.opsForList().leftPop(key);
+                newOrderDataVos.add(JSONObject.parseObject(content, NewOrderDataVo.class));
+            }
+        }
+        return newOrderDataVos;
+    }
+
+    @Override
+    public Boolean clearNewOrderQueueData(Long driverId) {
+        String key = RedisConstant.DRIVER_ORDER_TEMP_LIST + driverId;
+        //直接删除，司机开启服务后，有新订单会自动创建容器
+        redisTemplate.delete(key);
+        return true;
     }
 }
