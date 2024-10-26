@@ -2,6 +2,7 @@ package com.atguigu.daijia.customer.service.impl;
 
 import com.atguigu.daijia.common.result.Result;
 import com.atguigu.daijia.customer.service.OrderService;
+import com.atguigu.daijia.dispatch.client.NewOrderFeignClient;
 import com.atguigu.daijia.map.client.MapFeignClient;
 import com.atguigu.daijia.model.form.customer.ExpectOrderForm;
 import com.atguigu.daijia.model.form.customer.SubmitOrderForm;
@@ -9,6 +10,7 @@ import com.atguigu.daijia.model.form.map.CalculateDrivingLineForm;
 import com.atguigu.daijia.model.form.order.OrderInfoForm;
 import com.atguigu.daijia.model.form.rules.FeeRuleRequestForm;
 import com.atguigu.daijia.model.vo.customer.ExpectOrderVo;
+import com.atguigu.daijia.model.vo.dispatch.NewOrderTaskVo;
 import com.atguigu.daijia.model.vo.map.DrivingLineVo;
 import com.atguigu.daijia.model.vo.rules.FeeRuleResponseVo;
 import com.atguigu.daijia.order.client.OrderInfoFeignClient;
@@ -31,6 +33,8 @@ public class OrderServiceImpl implements OrderService {
     private FeeRuleFeignClient feeRuleFeignClient;
     @Autowired
     private OrderInfoFeignClient orderInfoFeignClient;
+    @Autowired
+    private NewOrderFeignClient newOrderFeignClient;
 
     @Override
     public ExpectOrderVo expectOrder(ExpectOrderForm expectOrderForm) {
@@ -78,9 +82,23 @@ public class OrderServiceImpl implements OrderService {
         orderInfoForm.setExpectAmount(feeRuleResponseVo.getTotalAmount());
         Result<Long> orderInfoResult = orderInfoFeignClient.saveOrderInfo(orderInfoForm);
 
-        //TODO 查询附近可以接单的司机
+        //任务调度：查询附近可以接单的司机
+        NewOrderTaskVo neworderDispatchVo = new NewOrderTaskVo();
+        neworderDispatchVo.setOrderId(orderInfoResult.getData());
+        neworderDispatchVo.setStartLocation(orderInfoForm.getStartLocation());
+        neworderDispatchVo.setStartPointLongitude(orderInfoForm.getStartPointLongitude());
+        neworderDispatchVo.setStartPointLatitude(orderInfoForm.getStartPointLatitude());
+        neworderDispatchVo.setEndLocation(orderInfoForm.getEndLocation());
+        neworderDispatchVo.setEndPointLongitude(orderInfoForm.getEndPointLongitude());
+        neworderDispatchVo.setEndPointLatitude(orderInfoForm.getEndPointLatitude());
+        neworderDispatchVo.setExpectAmount(orderInfoForm.getExpectAmount());
+        neworderDispatchVo.setExpectDistance(orderInfoForm.getExpectDistance());
+        neworderDispatchVo.setExpectTime(drivingLineVo.getDuration());
+        neworderDispatchVo.setFavourFee(orderInfoForm.getFavourFee());
+        neworderDispatchVo.setCreateTime(new Date());
+        Result<Long> addAndStartTaskResult = newOrderFeignClient.addAndStartTask(neworderDispatchVo);
 
-        return orderInfoResult.getData();
+        return addAndStartTaskResult.getData();
     }
 
     @Override

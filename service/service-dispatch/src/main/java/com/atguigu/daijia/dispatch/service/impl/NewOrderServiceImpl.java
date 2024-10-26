@@ -12,6 +12,7 @@ import com.atguigu.daijia.model.form.map.SearchNearByDriverForm;
 import com.atguigu.daijia.model.form.order.OrderInfoForm;
 import com.atguigu.daijia.model.vo.dispatch.NewOrderTaskVo;
 import com.atguigu.daijia.model.vo.map.NearByDriverVo;
+import com.atguigu.daijia.model.vo.order.NewOrderDataVo;
 import com.atguigu.daijia.order.client.OrderInfoFeignClient;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -88,6 +90,24 @@ public class NewOrderServiceImpl implements NewOrderService {
             Boolean isMember = redisTemplate.opsForSet().isMember(repeatKey, item.getDriverId());
             if(Boolean.FALSE.equals(isMember)){
                 //将订单推送给多个满足条件的司机
+                redisTemplate.opsForSet().add(repeatKey, item.getDriverId());
+                //设置过期时间15分钟
+                redisTemplate.expire(repeatKey, RedisConstant.DRIVER_ORDER_REPEAT_LIST_EXPIRES_TIME, TimeUnit.MINUTES);
+                //将订单信息保存到司机临时队列
+                NewOrderDataVo newOrderDataVo = new NewOrderDataVo();
+                newOrderDataVo.setOrderId(newOrderTaskVo.getOrderId());
+                newOrderDataVo.setStartLocation(newOrderTaskVo.getStartLocation());
+                newOrderDataVo.setEndLocation(newOrderTaskVo.getEndLocation());
+                newOrderDataVo.setExpectAmount(newOrderTaskVo.getExpectAmount());
+                newOrderDataVo.setExpectDistance(newOrderTaskVo.getExpectDistance());
+                newOrderDataVo.setExpectTime(newOrderTaskVo.getExpectTime());
+                newOrderDataVo.setFavourFee(newOrderTaskVo.getFavourFee());
+                newOrderDataVo.setDistance(item.getDistance());
+                newOrderDataVo.setCreateTime(newOrderTaskVo.getCreateTime());
+
+                String key = RedisConstant.DRIVER_ORDER_TEMP_LIST+item.getDriverId();
+                redisTemplate.opsForList().leftPush(key,JSONObject.toJSONString(newOrderDataVo));
+                redisTemplate.expire(key, RedisConstant.DRIVER_ORDER_TEMP_LIST_EXPIRES_TIME, TimeUnit.MINUTES);
             }
         });
     }
