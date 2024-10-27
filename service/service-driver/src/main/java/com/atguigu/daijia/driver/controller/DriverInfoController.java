@@ -1,6 +1,7 @@
 package com.atguigu.daijia.driver.controller;
 
 import com.atguigu.daijia.common.result.Result;
+import com.atguigu.daijia.driver.mapper.DriverFaceRecognitionMapper;
 import com.atguigu.daijia.driver.service.DriverInfoService;
 import com.atguigu.daijia.model.entity.driver.DriverSet;
 import com.atguigu.daijia.model.form.driver.DriverFaceModelForm;
@@ -22,6 +23,7 @@ public class DriverInfoController {
 
     @Autowired
     private DriverInfoService driverInfoService;
+
 
     @Operation(summary = "小程序授权登录")
     @GetMapping("/login/{code}")
@@ -57,6 +59,12 @@ public class DriverInfoController {
     @GetMapping("/getDriverSet/{driverId}")
     public Result<DriverSet> getDriverSet(@PathVariable Long driverId) {
         return Result.ok(driverInfoService.getDriverSet(driverId));
+    }
+
+    @Operation(summary = "判断司机当日是否进行过人脸识别")
+    @GetMapping("/isFaceRecognition/{driverId}")
+    Result<Boolean> isFaceRecognition(@PathVariable("driverId") Long driverId) {
+        return Result.ok(driverInfoService.isFaceRecognition(driverId));
     }
 }
 

@@ -30,6 +30,7 @@ public class DriverServiceImpl implements DriverService {
     @Autowired
     private RedisTemplate redisTemplate;
 
+
     @Override
     public String login(String code) {
         Result<Long> loginResult = driverInfoFeignClient.login(code);
@@ -78,5 +79,10 @@ public class DriverServiceImpl implements DriverService {
     @Override
     public Boolean creatDriverFaceModel(DriverFaceModelForm driverFaceModelForm) {
         return driverInfoFeignClient.creatDriverFaceModel(driverFaceModelForm).getData();
+    }
+
+    @Override
+    public Boolean isFaceRecognition(Long driverId) {
+        return driverInfoFeignClient.isFaceRecognition(driverId).getData();
     }
 }
