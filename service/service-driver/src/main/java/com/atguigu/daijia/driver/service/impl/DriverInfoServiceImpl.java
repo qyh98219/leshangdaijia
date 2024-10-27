@@ -237,6 +237,16 @@ public class DriverInfoServiceImpl extends ServiceImpl<DriverInfoMapper, DriverI
         throw new GuiguException(ResultCodeEnum.DATA_ERROR);
     }
 
+    @Override
+    public Boolean updateServiceStatus(Long driverId, Integer status) {
+        LambdaQueryWrapper<DriverSet> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DriverSet::getDriverId, driverId);
+        DriverSet driverSet = new DriverSet();
+        driverSet.setServiceStatus(status);
+        driverSetMapper.update(driverSet, queryWrapper);
+        return true;
+    }
+
     private boolean detectLiveFace(String imageBase64) {
         try{
             // 实例化一个认证对象，入参需要传入腾讯云账户 SecretId 和 SecretKey，此处还需注意密钥对的保密
