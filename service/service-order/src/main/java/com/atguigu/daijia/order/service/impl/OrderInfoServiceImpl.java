@@ -2,6 +2,7 @@ package com.atguigu.daijia.order.service.impl;
 
 import com.atguigu.daijia.common.constant.RedisConstant;
 import com.atguigu.daijia.common.execption.GuiguException;
+import com.atguigu.daijia.common.result.ResultCodeEnum;
 import com.atguigu.daijia.model.entity.order.OrderInfo;
 import com.atguigu.daijia.model.entity.order.OrderStatusLog;
 import com.atguigu.daijia.model.enums.OrderStatus;
@@ -10,6 +11,7 @@ import com.atguigu.daijia.order.mapper.OrderInfoMapper;
 import com.atguigu.daijia.order.mapper.OrderStatusLogMapper;
 import com.atguigu.daijia.order.service.OrderInfoService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +62,33 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
             return OrderStatus.NULL_ORDER.getStatus();
         }
         return orderInfo.getStatus();
+    }
+
+    @Override
+    public Boolean robNewOrder(Long driverId, Long orderId) {
+        //判断订单是否存在
+        if(Boolean.FALSE.equals(redisTemplate.hasKey(RedisConstant.ORDER_ACCEPT_MARK))){
+            //抢单失败
+            throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+        }
+
+        //司机抢单
+        //修改订单状态值
+        LambdaUpdateWrapper<OrderInfo> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(OrderInfo::getId, orderId);
+        updateWrapper.eq(OrderInfo::getDriverId, driverId);
+        updateWrapper.set(OrderInfo::getStatus, 2);
+        updateWrapper.set(OrderInfo::getAcceptTime, new Date());
+        int rows = orderInfoMapper.update(updateWrapper);
+        if(rows != 1){
+            //抢单失败
+            throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+        }
+
+        //删除标识
+        redisTemplate.delete(RedisConstant.ORDER_ACCEPT_MARK);
+
+        return true;
     }
 
     public void log(Long orderId, Integer status) {
