@@ -13,6 +13,8 @@ import com.atguigu.daijia.order.service.OrderInfoService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -32,6 +34,8 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     private OrderStatusLogMapper orderStatusLogMapper;
     @Autowired
     private RedisTemplate redisTemplate;
+    @Autowired
+    private RedissonClient redissonClient;
 
 
     @Override
@@ -72,21 +76,41 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
             throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
         }
 
-        //司机抢单
-        //修改订单状态值
-        LambdaUpdateWrapper<OrderInfo> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.eq(OrderInfo::getId, orderId);
-        updateWrapper.eq(OrderInfo::getDriverId, driverId);
-        updateWrapper.set(OrderInfo::getStatus, 2);
-        updateWrapper.set(OrderInfo::getAcceptTime, new Date());
-        int rows = orderInfoMapper.update(updateWrapper);
-        if(rows != 1){
+        RLock lock = redissonClient.getLock(RedisConstant.ROB_NEW_ORDER_LOCK + orderId);
+        try{
+            boolean flag = lock.tryLock(RedisConstant.ROB_NEW_ORDER_LOCK_WAIT_TIME, RedisConstant.ROB_NEW_ORDER_LOCK_LEASE_TIME, TimeUnit.SECONDS);
+            if(flag){
+                //判断订单是否存在
+                if(Boolean.FALSE.equals(redisTemplate.hasKey(RedisConstant.ORDER_ACCEPT_MARK))){
+                    //抢单失败
+                    throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+                }
+                //司机抢单
+                //修改订单状态值
+                LambdaUpdateWrapper<OrderInfo> updateWrapper = new LambdaUpdateWrapper<>();
+                updateWrapper.eq(OrderInfo::getId, orderId);
+                updateWrapper.set(OrderInfo::getDriverId, driverId);
+                updateWrapper.set(OrderInfo::getStatus, 2);
+                updateWrapper.set(OrderInfo::getAcceptTime, new Date());
+                int rows = orderInfoMapper.update(updateWrapper);
+                if(rows != 1){
+                    //抢单失败
+                    throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+                }
+
+                //删除标识
+                redisTemplate.delete(RedisConstant.ORDER_ACCEPT_MARK);
+            }
+
+        }catch (Exception e){
             //抢单失败
             throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+        }finally {
+           if(lock.isLocked()){
+               lock.unlock();
+           }
         }
 
-        //删除标识
-        redisTemplate.delete(RedisConstant.ORDER_ACCEPT_MARK);
 
         return true;
     }
