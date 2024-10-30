@@ -41,13 +41,20 @@ public class OrderController {
         return Result.ok(orderService.findNewOrderQueueData(driverId));
     }
 
-    @Operation(summary = "查找司机端当前订单")
+    @Operation(summary = "司机端查找当前订单")
     @GuiguLogin
     @GetMapping("/searchDriverCurrentOrder")
     public Result<CurrentOrderInfoVo> searchDriverCurrentOrder() {
-        CurrentOrderInfoVo currentOrderInfoVo = new CurrentOrderInfoVo();
-        currentOrderInfoVo.setIsHasCurrentOrder(false);
-        return Result.ok(currentOrderInfoVo);
+        Long driverId = AuthContextHolder.getUserId();
+        return Result.ok(orderService.searchDriverCurrentOrder(driverId));
+    }
+
+    @Operation(summary = "乘客端查找当前订单")
+    @GuiguLogin
+    @GetMapping("/searchCustomerCurrentOrder")
+    public Result<CurrentOrderInfoVo> searchCustomerCurrentOrder() {
+        Long customerId = AuthContextHolder.getUserId();
+        return Result.ok(orderService.searchCustomerCurrentOrder(customerId));
     }
 
     @Operation(summary = "司机抢单")

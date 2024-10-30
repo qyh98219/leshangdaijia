@@ -7,6 +7,7 @@ import com.atguigu.daijia.model.entity.order.OrderInfo;
 import com.atguigu.daijia.model.entity.order.OrderStatusLog;
 import com.atguigu.daijia.model.enums.OrderStatus;
 import com.atguigu.daijia.model.form.order.OrderInfoForm;
+import com.atguigu.daijia.model.vo.order.CurrentOrderInfoVo;
 import com.atguigu.daijia.order.mapper.OrderInfoMapper;
 import com.atguigu.daijia.order.mapper.OrderStatusLogMapper;
 import com.atguigu.daijia.order.service.OrderInfoService;
@@ -113,6 +114,64 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
 
 
         return true;
+    }
+
+    @Override
+    public CurrentOrderInfoVo searchCustomerCurrentOrder(Long customerId) {
+        //封装条件
+        LambdaQueryWrapper<OrderInfo> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(OrderInfo::getCustomerId, customerId);
+        //乘客端支付完订单，乘客端主要流程就走完（当前这些节点，乘客端会调整到相应的页面处理逻辑）
+        Integer[] statusArray = {
+                OrderStatus.ACCEPTED.getStatus(),
+                OrderStatus.DRIVER_ARRIVED.getStatus(),
+                OrderStatus.UPDATE_CART_INFO.getStatus(),
+                OrderStatus.START_SERVICE.getStatus(),
+                OrderStatus.END_SERVICE.getStatus(),
+                OrderStatus.UNPAID.getStatus()
+        };
+        queryWrapper.in(OrderInfo::getStatus, statusArray);
+        //获取最新一条数据
+        queryWrapper.orderByDesc(OrderInfo::getId);
+        queryWrapper.last("limit 1");
+
+        OrderInfo orderInfo = orderInfoMapper.selectOne(queryWrapper);
+        CurrentOrderInfoVo currentOrderInfoVo = new CurrentOrderInfoVo();
+        if(Objects.nonNull(orderInfo)){
+            currentOrderInfoVo.setOrderId(orderInfo.getId());
+            currentOrderInfoVo.setStatus(orderInfo.getStatus());
+            currentOrderInfoVo.setIsHasCurrentOrder(true);
+        }else{
+            currentOrderInfoVo.setIsHasCurrentOrder(false);
+        }
+        return currentOrderInfoVo;
+    }
+
+    @Override
+    public CurrentOrderInfoVo searchDriverCurrentOrder(Long driverId) {
+        LambdaQueryWrapper<OrderInfo> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(OrderInfo::getDriverId, driverId);
+        //司机发送完账单，司机端主要流程就走完（当前这些节点，司机端会调整到相应的页面处理逻辑）
+        Integer[] statusArray = {
+                OrderStatus.ACCEPTED.getStatus(),
+                OrderStatus.DRIVER_ARRIVED.getStatus(),
+                OrderStatus.UPDATE_CART_INFO.getStatus(),
+                OrderStatus.START_SERVICE.getStatus(),
+                OrderStatus.END_SERVICE.getStatus()
+        };
+        queryWrapper.in(OrderInfo::getStatus, statusArray);
+        queryWrapper.orderByDesc(OrderInfo::getId);
+        queryWrapper.last("limit 1");
+        OrderInfo orderInfo = orderInfoMapper.selectOne(queryWrapper);
+        CurrentOrderInfoVo currentOrderInfoVo = new CurrentOrderInfoVo();
+        if(null != orderInfo) {
+            currentOrderInfoVo.setStatus(orderInfo.getStatus());
+            currentOrderInfoVo.setOrderId(orderInfo.getId());
+            currentOrderInfoVo.setIsHasCurrentOrder(true);
+        } else {
+            currentOrderInfoVo.setIsHasCurrentOrder(false);
+        }
+        return currentOrderInfoVo;
     }
 
     public void log(Long orderId, Integer status) {
