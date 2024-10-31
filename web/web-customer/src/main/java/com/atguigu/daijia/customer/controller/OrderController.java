@@ -6,7 +6,9 @@ import com.atguigu.daijia.common.util.AuthContextHolder;
 import com.atguigu.daijia.customer.service.OrderService;
 import com.atguigu.daijia.model.form.customer.ExpectOrderForm;
 import com.atguigu.daijia.model.form.customer.SubmitOrderForm;
+import com.atguigu.daijia.model.form.map.CalculateDrivingLineForm;
 import com.atguigu.daijia.model.vo.customer.ExpectOrderVo;
+import com.atguigu.daijia.model.vo.map.DrivingLineVo;
 import com.atguigu.daijia.model.vo.map.OrderLocationVo;
 import com.atguigu.daijia.model.vo.order.CurrentOrderInfoVo;
 import com.atguigu.daijia.model.vo.order.OrderInfoVo;
@@ -71,6 +73,13 @@ public class OrderController {
     @GetMapping("/getCacheOrderLocation/{orderId}")
     public Result<OrderLocationVo> getOrderLocation(@PathVariable Long orderId) {
         return Result.ok(orderService.getCacheOrderLocation(orderId));
+    }
+
+    @Operation(summary = "计算最佳驾驶线路")
+    @GuiguLogin
+    @PostMapping("/calculateDrivingLine")
+    public Result<DrivingLineVo> calculateDrivingLine(@RequestBody CalculateDrivingLineForm calculateDrivingLineForm) {
+        return Result.ok(orderService.calculateDrivingLine(calculateDrivingLineForm));
     }
 }
 
