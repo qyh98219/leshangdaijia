@@ -90,4 +90,9 @@ public class OrderServiceImpl implements OrderService {
         }
         return driverInfoFeignClient.getDriverInfo(orderInfo.getDriverId()).getData();
     }
+
+    @Override
+    public Boolean driverArriveStartLocation(Long orderId, Long driverId) {
+        return orderInfoFeignClient.driverArriveStartLocation(orderId,driverId).getData();
+    }
 }
