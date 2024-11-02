@@ -46,6 +46,5 @@ public class LocationController {
     @Operation(summary = "开始代驾服务：保存代驾服务订单位置")
     @PostMapping("/saveOrderServiceLocation")
     public Result<Boolean> saveOrderServiceLocation(@RequestBody List<OrderServiceLocationForm> orderLocationServiceFormList) {return Result.ok(locationService.saveOrderServiceLocation(orderLocationServiceFormList));}
-
 }
 

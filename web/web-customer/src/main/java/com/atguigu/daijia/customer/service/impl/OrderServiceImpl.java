@@ -17,6 +17,7 @@ import com.atguigu.daijia.model.vo.customer.ExpectOrderVo;
 import com.atguigu.daijia.model.vo.dispatch.NewOrderTaskVo;
 import com.atguigu.daijia.model.vo.map.DrivingLineVo;
 import com.atguigu.daijia.model.vo.map.OrderLocationVo;
+import com.atguigu.daijia.model.vo.map.OrderServiceLastLocationVo;
 import com.atguigu.daijia.model.vo.order.OrderInfoVo;
 import com.atguigu.daijia.model.vo.rules.FeeRuleResponseVo;
 import com.atguigu.daijia.order.client.OrderInfoFeignClient;
@@ -135,5 +136,10 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public DrivingLineVo calculateDrivingLine(CalculateDrivingLineForm calculateDrivingLineForm) {
         return mapFeignClient.calculateDrivingLine(calculateDrivingLineForm).getData();
+    }
+
+    @Override
+    public OrderServiceLastLocationVo getOrderServiceLastLocation(Long orderId) {
+        return locationFeignClient.getOrderServiceLastLocation(orderId).getData();
     }
 }
