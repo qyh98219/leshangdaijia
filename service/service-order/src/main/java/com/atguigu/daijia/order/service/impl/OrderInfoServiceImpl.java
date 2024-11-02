@@ -7,6 +7,7 @@ import com.atguigu.daijia.model.entity.order.OrderInfo;
 import com.atguigu.daijia.model.entity.order.OrderStatusLog;
 import com.atguigu.daijia.model.enums.OrderStatus;
 import com.atguigu.daijia.model.form.order.OrderInfoForm;
+import com.atguigu.daijia.model.form.order.StartDriveForm;
 import com.atguigu.daijia.model.form.order.UpdateOrderCartForm;
 import com.atguigu.daijia.model.vo.order.CurrentOrderInfoVo;
 import com.atguigu.daijia.order.mapper.OrderInfoMapper;
@@ -205,6 +206,23 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         if(row == 1) {
             //记录日志
             this.log(updateOrderCartForm.getOrderId(), OrderStatus.UPDATE_CART_INFO.getStatus());
+        } else {
+            throw new GuiguException(ResultCodeEnum.UPDATE_ERROR);
+        }
+        return true;
+    }
+
+    @Override
+    public Boolean startDrive(StartDriveForm startDriveForm) {
+        LambdaUpdateWrapper<OrderInfo> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(OrderInfo::getId, startDriveForm.getOrderId());
+        updateWrapper.eq(OrderInfo::getDriverId, startDriveForm.getDriverId());
+        updateWrapper.set(OrderInfo::getStatus, OrderStatus.START_SERVICE.getStatus());
+        updateWrapper.set(OrderInfo::getStartServiceTime, new Date());
+        int rows = orderInfoMapper.update(updateWrapper);
+        if(rows == 1) {
+            //记录日志
+            this.log(startDriveForm.getOrderId(), OrderStatus.START_SERVICE.getStatus());
         } else {
             throw new GuiguException(ResultCodeEnum.UPDATE_ERROR);
         }
