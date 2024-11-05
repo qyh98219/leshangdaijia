@@ -2,6 +2,7 @@ package com.atguigu.daijia.driver.service.impl;
 
 import com.atguigu.daijia.driver.service.FileService;
 import com.atguigu.daijia.driver.service.MonitorService;
+import com.atguigu.daijia.model.entity.order.OrderMonitorRecord;
 import com.atguigu.daijia.model.form.order.OrderMonitorForm;
 import com.atguigu.daijia.order.client.OrderMonitorFeignClient;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,15 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     public Boolean upload(MultipartFile file, OrderMonitorForm orderMonitorForm) {
-        return null;
+        //上传文件
+        String url = fileService.upload(file);
+
+        OrderMonitorRecord orderMonitorRecord = new OrderMonitorRecord();
+        orderMonitorRecord.setOrderId(orderMonitorForm.getOrderId());
+        orderMonitorRecord.setFileUrl(url);
+        orderMonitorRecord.setContent(orderMonitorForm.getContent());
+
+        orderMonitorFeignClient.saveMonitorRecord(orderMonitorRecord);
+        return true;
     }
 }
