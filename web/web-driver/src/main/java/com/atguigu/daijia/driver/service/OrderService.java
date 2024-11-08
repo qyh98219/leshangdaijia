@@ -12,6 +12,7 @@ import com.atguigu.daijia.model.vo.order.NewOrderDataVo;
 import com.atguigu.daijia.model.vo.order.OrderInfoVo;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public interface OrderService {
 
@@ -38,7 +39,7 @@ public interface OrderService {
 
     Boolean startDrive(StartDriveForm startDriveForm);
 
-    Boolean endDrive(OrderFeeForm orderFeeForm);
+    Boolean endDrive(OrderFeeForm orderFeeForm) throws ExecutionException, InterruptedException;
 
     PageVo findDriverOrderPage(Long driverId, Long page, Long limit);
 }
