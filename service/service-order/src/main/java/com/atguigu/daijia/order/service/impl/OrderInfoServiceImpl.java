@@ -356,6 +356,33 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         return orderPayVo;
     }
 
+    @Override
+    public Boolean updateOrderPayStatus(String orderNo) {
+        //查询订单，判断订单状态，如果已更新支付状态，直接返回
+        LambdaQueryWrapper<OrderInfo> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(OrderInfo::getOrderNo, orderNo);
+        queryWrapper.select(OrderInfo::getId, OrderInfo::getDriverId, OrderInfo::getStatus);
+        OrderInfo orderInfo = orderInfoMapper.selectOne(queryWrapper);
+        if(null == orderInfo || orderInfo.getStatus().intValue() == OrderStatus.PAID.getStatus().intValue()) return true;
+
+        //更新订单状态
+        LambdaQueryWrapper<OrderInfo> updateQueryWrapper = new LambdaQueryWrapper<>();
+        updateQueryWrapper.eq(OrderInfo::getOrderNo, orderNo);
+        //更新字段
+        OrderInfo updateOrderInfo = new OrderInfo();
+        updateOrderInfo.setStatus(OrderStatus.PAID.getStatus());
+        updateOrderInfo.setPayTime(new Date());
+        int row = orderInfoMapper.update(updateOrderInfo, queryWrapper);
+        if(row == 1) {
+            //记录日志
+            this.log(orderInfo.getId(), OrderStatus.PAID.getStatus());
+        } else {
+            log.error("订单支付回调更新订单状态失败，订单号为：" + orderNo);
+            throw new GuiguException(ResultCodeEnum.UPDATE_ERROR);
+        }
+        return true;
+    }
+
     public void log(Long orderId, Integer status) {
         OrderStatusLog orderStatusLog = new OrderStatusLog();
         orderStatusLog.setOrderId(orderId);
