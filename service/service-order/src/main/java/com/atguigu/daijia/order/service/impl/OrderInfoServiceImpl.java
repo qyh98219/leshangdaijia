@@ -9,6 +9,7 @@ import com.atguigu.daijia.model.form.order.OrderInfoForm;
 import com.atguigu.daijia.model.form.order.StartDriveForm;
 import com.atguigu.daijia.model.form.order.UpdateOrderBillForm;
 import com.atguigu.daijia.model.form.order.UpdateOrderCartForm;
+import com.atguigu.daijia.model.vo.base.PageVo;
 import com.atguigu.daijia.model.vo.order.CurrentOrderInfoVo;
 import com.atguigu.daijia.order.mapper.OrderBillMapper;
 import com.atguigu.daijia.order.mapper.OrderInfoMapper;
@@ -18,6 +19,8 @@ import com.atguigu.daijia.order.service.OrderInfoService;
 import com.atguigu.daijia.order.service.OrderMonitorService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -75,7 +78,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         queryWrapper.eq(OrderInfo::getId, orderId);
         queryWrapper.select(OrderInfo::getStatus);
         OrderInfo orderInfo = this.getOne(queryWrapper);
-        if(Objects.isNull(orderInfo)){
+        if (Objects.isNull(orderInfo)) {
             return OrderStatus.NULL_ORDER.getStatus();
         }
         return orderInfo.getStatus();
@@ -84,17 +87,17 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     @Override
     public Boolean robNewOrder(Long driverId, Long orderId) {
         //判断订单是否存在
-        if(Boolean.FALSE.equals(redisTemplate.hasKey(RedisConstant.ORDER_ACCEPT_MARK))){
+        if (Boolean.FALSE.equals(redisTemplate.hasKey(RedisConstant.ORDER_ACCEPT_MARK))) {
             //抢单失败
             throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
         }
 
         RLock lock = redissonClient.getLock(RedisConstant.ROB_NEW_ORDER_LOCK + orderId);
-        try{
+        try {
             boolean flag = lock.tryLock(RedisConstant.ROB_NEW_ORDER_LOCK_WAIT_TIME, RedisConstant.ROB_NEW_ORDER_LOCK_LEASE_TIME, TimeUnit.SECONDS);
-            if(flag){
+            if (flag) {
                 //判断订单是否存在
-                if(Boolean.FALSE.equals(redisTemplate.hasKey(RedisConstant.ORDER_ACCEPT_MARK))){
+                if (Boolean.FALSE.equals(redisTemplate.hasKey(RedisConstant.ORDER_ACCEPT_MARK))) {
                     //抢单失败
                     throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
                 }
@@ -106,7 +109,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
                 updateWrapper.set(OrderInfo::getStatus, 2);
                 updateWrapper.set(OrderInfo::getAcceptTime, new Date());
                 int rows = orderInfoMapper.update(updateWrapper);
-                if(rows != 1){
+                if (rows != 1) {
                     //抢单失败
                     throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
                 }
@@ -115,13 +118,13 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
                 redisTemplate.delete(RedisConstant.ORDER_ACCEPT_MARK);
             }
 
-        }catch (Exception e){
+        } catch (Exception e) {
             //抢单失败
             throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
-        }finally {
-           if(lock.isLocked()){
-               lock.unlock();
-           }
+        } finally {
+            if (lock.isLocked()) {
+                lock.unlock();
+            }
         }
 
 
@@ -149,11 +152,11 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
 
         OrderInfo orderInfo = orderInfoMapper.selectOne(queryWrapper);
         CurrentOrderInfoVo currentOrderInfoVo = new CurrentOrderInfoVo();
-        if(Objects.nonNull(orderInfo)){
+        if (Objects.nonNull(orderInfo)) {
             currentOrderInfoVo.setOrderId(orderInfo.getId());
             currentOrderInfoVo.setStatus(orderInfo.getStatus());
             currentOrderInfoVo.setIsHasCurrentOrder(true);
-        }else{
+        } else {
             currentOrderInfoVo.setIsHasCurrentOrder(false);
         }
         return currentOrderInfoVo;
@@ -176,7 +179,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         queryWrapper.last("limit 1");
         OrderInfo orderInfo = orderInfoMapper.selectOne(queryWrapper);
         CurrentOrderInfoVo currentOrderInfoVo = new CurrentOrderInfoVo();
-        if(null != orderInfo) {
+        if (null != orderInfo) {
             currentOrderInfoVo.setStatus(orderInfo.getStatus());
             currentOrderInfoVo.setOrderId(orderInfo.getId());
             currentOrderInfoVo.setIsHasCurrentOrder(true);
@@ -192,12 +195,12 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         LambdaUpdateWrapper<OrderInfo> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(OrderInfo::getId, orderId);
         updateWrapper.eq(OrderInfo::getDriverId, driverId);
-        updateWrapper.set(OrderInfo::getStatus,OrderStatus.DRIVER_ARRIVED.getStatus());
+        updateWrapper.set(OrderInfo::getStatus, OrderStatus.DRIVER_ARRIVED.getStatus());
         updateWrapper.set(OrderInfo::getArriveTime, new Date());
         int rows = orderInfoMapper.update(updateWrapper);
-        if(rows > 0){
+        if (rows > 0) {
             return true;
-        }else {
+        } else {
             throw new GuiguException(ResultCodeEnum.UPDATE_ERROR);
         }
     }
@@ -213,7 +216,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         updateOrderInfo.setStatus(OrderStatus.UPDATE_CART_INFO.getStatus());
         //只能更新自己的订单
         int row = orderInfoMapper.update(updateOrderInfo, queryWrapper);
-        if(row == 1) {
+        if (row == 1) {
             //记录日志
             this.log(updateOrderCartForm.getOrderId(), OrderStatus.UPDATE_CART_INFO.getStatus());
         } else {
@@ -230,7 +233,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         updateWrapper.set(OrderInfo::getStatus, OrderStatus.START_SERVICE.getStatus());
         updateWrapper.set(OrderInfo::getStartServiceTime, new Date());
         int rows = orderInfoMapper.update(updateWrapper);
-        if(rows == 1) {
+        if (rows == 1) {
             //记录日志
             this.log(startDriveForm.getOrderId(), OrderStatus.START_SERVICE.getStatus());
         } else {
@@ -270,7 +273,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         //只能更新自己的订单
         int rows = orderInfoMapper.update(updateOrderInfo, queryWrapper);
 
-        if(rows == 1){
+        if (rows == 1) {
             //记录日志
             this.log(updateOrderBillForm.getOrderId(), OrderStatus.END_SERVICE.getStatus());
 
@@ -290,9 +293,15 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
             orderProfitsharingMapper.insert(orderProfitsharing);
 
             return true;
-        }else {
+        } else {
             throw new GuiguException(ResultCodeEnum.UPDATE_ERROR);
         }
+    }
+
+    @Override
+    public PageVo findCustomerOrderPage(Page<OrderInfo> pageParam, Long customerId) {
+        IPage<OrderInfo> orderInfoPage = orderInfoMapper.selectCustomerOrderPage(pageParam, customerId);
+        return new PageVo(orderInfoPage.getRecords(),orderInfoPage.getPages(),orderInfoPage.getTotal());
     }
 
     public void log(Long orderId, Integer status) {

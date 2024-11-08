@@ -89,5 +89,6 @@ public class OrderController {
     public Result<OrderServiceLastLocationVo> getOrderServiceLastLocation(@PathVariable Long orderId) {
         return Result.ok(orderService.getOrderServiceLastLocation(orderId));
     }
+
 }
 
