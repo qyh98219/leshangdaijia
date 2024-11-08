@@ -2,9 +2,11 @@ package com.atguigu.daijia.driver.controller;
 
 import com.atguigu.daijia.common.result.Result;
 import com.atguigu.daijia.driver.mapper.DriverFaceRecognitionMapper;
+import com.atguigu.daijia.driver.service.DriverAccountService;
 import com.atguigu.daijia.driver.service.DriverInfoService;
 import com.atguigu.daijia.model.entity.driver.DriverSet;
 import com.atguigu.daijia.model.form.driver.DriverFaceModelForm;
+import com.atguigu.daijia.model.form.driver.TransferForm;
 import com.atguigu.daijia.model.form.driver.UpdateDriverAuthInfoForm;
 import com.atguigu.daijia.model.vo.driver.DriverAuthInfoVo;
 import com.atguigu.daijia.model.vo.driver.DriverInfoVo;
@@ -24,7 +26,6 @@ public class DriverInfoController {
 
     @Autowired
     private DriverInfoService driverInfoService;
-
 
     @Operation(summary = "小程序授权登录")
     @GetMapping("/login/{code}")
@@ -91,5 +92,6 @@ public class DriverInfoController {
     public Result<String> getDriverOpenId(@PathVariable Long driverId) {
         return Result.ok(driverInfoService.getDriverOpenId(driverId));
     }
+
 }
 
