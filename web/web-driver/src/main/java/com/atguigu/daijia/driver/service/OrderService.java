@@ -39,7 +39,7 @@ public interface OrderService {
 
     Boolean startDrive(StartDriveForm startDriveForm);
 
-    Boolean endDrive(OrderFeeForm orderFeeForm) throws ExecutionException, InterruptedException;
+    Boolean endDrive(OrderFeeForm orderFeeForm);
 
     PageVo findDriverOrderPage(Long driverId, Long page, Long limit);
 }
